@@ -16,4 +16,9 @@ public abstract class Person {
 	private String passwordHash;
 	private String emailAddress;
 	private PersonRole role;
+	
+	public PersonRole GetRole() {
+		return role;
+	}
+	
 }

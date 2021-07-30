@@ -11,6 +11,7 @@ public class Booking {
 	private int id;
 	private double deposit = 0;
 	private double balance = 0;
-	private State state = State.Pending;
+	private State status = State.Pending;
+	private double price = 0;
 	private Planning planning;
 }
