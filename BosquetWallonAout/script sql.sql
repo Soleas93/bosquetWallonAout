@@ -153,9 +153,11 @@ CREATE TABLE BWA_Representation(
 CREATE TABLE BWA_Ticket(
 	id                     NUMBER NOT NULL ,
 	price                  FLOAT (24)  NOT NULL  ,
+	type                   VARCHAR2(8) ,
 	id_BWA_Order           NUMBER(10,0)  NOT NULL  ,
 	id_BWA_Representation  NUMBER(10,0)  NOT NULL  ,
-	CONSTRAINT BWA_Ticket_PK PRIMARY KEY (id)
+	CONSTRAINT BWA_Ticket_PK PRIMARY KEY (id),
+	CONSTRAINT CHK_TYPE_Ticket_Category_type CHECK (type IN ('Standing','Diamond','Gold','Silver','Bronze'))
 
 	,CONSTRAINT BWA_Ticket_BWA_Order_FK FOREIGN KEY (id_BWA_Order) REFERENCES BWA_Order(id)
 	,CONSTRAINT BWA_Ticket_BWA_Representation0_FK FOREIGN KEY (id_BWA_Representation) REFERENCES BWA_Representation(id)

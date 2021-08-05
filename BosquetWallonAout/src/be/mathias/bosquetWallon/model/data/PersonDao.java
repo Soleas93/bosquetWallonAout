@@ -15,7 +15,7 @@ public class PersonDao extends Dao<Person> {
 		//Prepare create person
 		
 		//Prepare create child relation
-		switch(obj.GetRole()) {
+		switch(obj.getRole()) {
 		case Spectator:
 			
 			break;

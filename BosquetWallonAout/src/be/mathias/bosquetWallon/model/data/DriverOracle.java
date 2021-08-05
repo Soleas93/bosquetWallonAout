@@ -13,7 +13,7 @@ public class DriverOracle {
 	private static final String DRIVER = "oracle.jdbc.OracleDriver";
     private static final String DBURL = "jdbc:oracle:thin:@//193.190.64.10:1522/XEPDB1";
     private static final String USERNAME = "student03_20";
-    private static final String PASSWORD = "b4rt7p";
+    private static final String PASSWORD = "b4rt7pb4";
 
     private DriverOracle() {
         try {
