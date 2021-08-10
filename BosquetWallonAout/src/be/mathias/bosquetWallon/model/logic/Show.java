@@ -19,6 +19,9 @@ public class Show {
 	private List<Representation> representationList;
 	private Configuration configuration;
 	
+	//db only
+	private int parentId = 0;
+	
 	//From db
 	public Show(int id, String title, String description, BufferedImage image, int ticketPerPerson,
 			List<Artist> artistList, List<Representation> representationList, Configuration configuration) {
@@ -51,6 +54,14 @@ public class Show {
 	public void setId(int id) {
 		if(this.id == 0 && id > 0)
 			this.id = id;
+	}
+	
+	public int getParentId() {
+		return parentId;
+	}
+	
+	public void setParentId(int planningId) {
+		this.parentId = planningId;
 	}
 
 	public String getTitle() {

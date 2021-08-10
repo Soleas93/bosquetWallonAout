@@ -18,6 +18,9 @@ public class Booking {
 	private double price = 0;
 	private Planning planning;
 	
+	//db only
+	private int parentId = 0;
+	
 	public Booking(int id, double deposit, double balance, State status, double price, Planning planning) {
 		setId(id);
 		setStatus(status);
@@ -45,6 +48,14 @@ public class Booking {
 	public void setId(int id) {
 		if(this.id == 0 && id > 0)
 			this.id = id;
+	}
+	
+	public int getParentId() {
+		return parentId;
+	}
+	
+	public void setParentId(int organizerId) {
+		this.parentId = organizerId;
 	}
 
 	public double getDeposit() {

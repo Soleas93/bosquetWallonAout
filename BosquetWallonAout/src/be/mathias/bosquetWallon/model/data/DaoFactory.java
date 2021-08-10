@@ -26,7 +26,9 @@ public abstract class DaoFactory {
 	public abstract Dao<Person> GetPersonDao(); //Works for : Spectator, Artist, Manager and Organizer
 	public abstract Dao<Order> GetOrderDao();
 	public abstract Dao<Ticket> GetTicketDao();
-	public abstract Dao<Show> GetShowDao(); // Directly load : (1)Configuration and (1..n)Category
+	public abstract Dao<Show> GetShowDao();
+	public abstract Dao<Configuration> GetConfigurationDao();
+	public abstract Dao<Category> GetCategoryDao();
 	public abstract Dao<Representation> GetRepresentationDao();
 	public abstract Dao<Booking> GetBookingDao();
 	public abstract Dao<Planning> GetPlanningDao();

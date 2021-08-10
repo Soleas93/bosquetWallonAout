@@ -4,26 +4,21 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import be.mathias.bosquetWallon.model.logic.Representation;
-import be.mathias.bosquetWallon.model.logic.Show;
+import be.mathias.bosquetWallon.model.logic.Category;
 import oracle.jdbc.OraclePreparedStatement;
 
-public class RepresentationDao extends Dao<Representation> {
-	
-	ShowDao showDao = (ShowDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetShowDao();
+public class CategoryDao extends Dao<Category> {
 
-	public RepresentationDao(Connection conn) {
+	public CategoryDao(Connection conn) {
 		super(conn);
 	}
 
 	@Override
-	public boolean create(Representation obj) {
-		if(obj.getShow().getId() == 0)
+	public boolean create(Category obj) {
+		if(obj.getParentId() == 0)
 			return false;
 		
 		OraclePreparedStatement prepare = null;
@@ -31,16 +26,17 @@ public class RepresentationDao extends Dao<Representation> {
 		
 		int id = 0;
 		
-		String sql = "INSERT INTO BWA_Representation(daydate, beginhour, endhour, id_bwa_show) VALUES (?,?,?,?) " +
+		String sql = "INSERT INTO BWA_Category(type, price, availabletickets, maximumtickets, id_bwa_configuration) VALUES (?,?,?,?,?) " +
                 "RETURNING id INTO ?";
 		
 		try {
             prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
-            prepare.setObject(1, obj.getDate());
-            prepare.setObject(2, obj.getBeginHour());
-            prepare.setObject(3, obj.getEndHour());
-            prepare.setInt(4, obj.getShow().getId());
-            prepare.registerReturnParameter(5, Types.INTEGER);
+            prepare.setString(1, obj.getType().toString());
+            prepare.setFloat(2, (float) obj.getPrice());
+            prepare.setInt(3, obj.getAvailableTickets());
+            prepare.setInt(4, obj.getMaximumTickets());
+            prepare.setInt(5, obj.getParentId());
+            prepare.registerReturnParameter(6, Types.INTEGER);
             prepare.execute();
             result = prepare.getReturnResultSet();
             
@@ -59,13 +55,13 @@ public class RepresentationDao extends Dao<Representation> {
 	}
 
 	@Override
-	public boolean delete(Representation obj) {
+	public boolean delete(Category obj) {
 		if(obj.getId() == 0)
 			return false;
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "DELETE FROM BWA_Representation WHERE id = ? ";
+		String sql = "DELETE FROM BWA_CATEGORY WHERE id = ? ";
 		
 		try {
 			prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
@@ -84,23 +80,24 @@ public class RepresentationDao extends Dao<Representation> {
 	}
 
 	@Override
-	public boolean update(Representation obj) {
+	public boolean update(Category obj) {
 		if(obj.getId() == 0)
 			return false;
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "update BWA_REPRESENTATION set"
-				+ "DAYDATE = ?,BEGINHOUR = ?,ID_BWA_SHOW = ?,ENDHOUR = ?"
+		String sql = "update BWA_CATEGORY set"
+				+ "AVAILABLETICKETS = ?,ID_BWA_CONFIGURATION = ?,PRICE = ?,MAXIMUMTICKETS = ?,TYPE = ?"
 				+ "where ID = ?";
 		
 		try {
 			prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
-			prepare.setObject(1, obj.getDate());
-            prepare.setObject(2, obj.getBeginHour());
-            prepare.setInt(3, obj.getShow().getId());
-            prepare.setObject(4, obj.getEndHour());
-            prepare.setInt(5, obj.getId());
+            prepare.setInt(1, obj.getAvailableTickets());
+            prepare.setInt(2, obj.getParentId());
+            prepare.setFloat(3, (float) obj.getPrice());
+            prepare.setInt(4, obj.getMaximumTickets());
+			prepare.setString(5, obj.getType().toString());
+            prepare.setInt(6, obj.getId());
             int updated = prepare.executeUpdate();
             
             if(updated >= 1) {            	
@@ -115,11 +112,11 @@ public class RepresentationDao extends Dao<Representation> {
 	}
 
 	@Override
-	public Representation find(int id) {
+	public Category find(int id) {
 		if(id <= 0)
 			return null;
 		
-		String sql = "SELECT * FROM BWA_Representation WHERE id = ?";
+		String sql = "SELECT * FROM BWA_Category WHERE id = ?";
 		
 		OraclePreparedStatement prepare = null;
         ResultSet result = null;
@@ -132,23 +129,18 @@ public class RepresentationDao extends Dao<Representation> {
             result = prepare.executeQuery();
 
             if(result.next()) {
-            	//LocalDate date = result.getDate(2).toLocalDate();
-            	//LocalTime beginHour = result.getTime(3).toLocalTime();
-            	//LocalTime endHour = result.getTime(4).toLocalTime();
-            	int showId = result.getInt(5);
+            	Category.Type catType = Category.Type.valueOf(result.getString(2));
+            	double price = (double) result.getFloat(3);
+            	int availableTickets = result.getInt(4);
+            	int maximumTickets = result.getInt(5);
+            	int configurationId = result.getInt(6);
             	
-            	Show show = showDao.find(showId);
-            	
-                // Representation representation = new Representation(id, date, beginHour, endHour, show);
-                
-            	Representation representation = show.getRepresentationList().stream()
-            			.filter(r -> ((Integer)r.getId()).equals((Integer)id))
-        				.findAny()
-        				.orElse(null);
+            	Category category = new Category(id, catType, price, availableTickets, maximumTickets);
+            	category.setParentId(configurationId);
                 
                 result.close();
                 prepare.close();
-                return representation;
+                return category;
             }else
                 return null;
 		}catch (SQLException e) {
@@ -157,46 +149,49 @@ public class RepresentationDao extends Dao<Representation> {
         }
 	}
 	
+	
 	/**
 	 * 
-	 * @param showId
+	 * @param configurationId
 	 * 		id of the parent Configuration, MUST be > 0
 	 * @return
 	 * 		null if error or empty; 
 	 * 		List of Category (1..n) if success
 	 */
-	public List<Representation> findByShow(int showId){
-		if(showId <= 0)
+	public List<Category> findByConfigurationId(int configurationId){
+		if(configurationId <= 0)
 			return null;
 		
-		List<Representation> representations = new ArrayList<Representation>();
+		List<Category> categories = new ArrayList<Category>();
 		
-		String sql = "SELECT * FROM BWA_Representation WHERE ID_BWA_SHOW = ?";
+		String sql = "SELECT * FROM BWA_CATEGORY WHERE ID_BWA_CONFIGURATION = ?";
 
 		OraclePreparedStatement prepare = null;
         ResultSet result = null;
 		
 		try {
             prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
-            prepare.setInt(1, showId);
+            prepare.setInt(1, configurationId);
             result = prepare.executeQuery();
 
             while(result.next()){
             	int id = result.getInt(1);
-            	LocalDate date = result.getDate(2).toLocalDate();
-            	LocalTime beginHour = result.getTime(3).toLocalTime();
-            	LocalTime endHour = result.getTime(4).toLocalTime();
+            	Category.Type catType = Category.Type.valueOf(result.getString(2));
+            	double price = (double) result.getFloat(3);
+            	int availableTickets = result.getInt(4);
+            	int maximumTickets = result.getInt(5);
             	
-                Representation representation = new Representation(id, date, beginHour, endHour, null);
+            	Category category = new Category(id, catType, price, availableTickets, maximumTickets);
+            	category.setParentId(configurationId);
             	
-                representations.add(representation);
+                categories.add(category);
             }
-            if(representations.isEmpty())
+            if(categories.isEmpty())
                 return null;
 
             result.close();
             prepare.close();
-            return representations;
+            return categories;
         } catch (SQLException e) {
             e.printStackTrace();
             return null;

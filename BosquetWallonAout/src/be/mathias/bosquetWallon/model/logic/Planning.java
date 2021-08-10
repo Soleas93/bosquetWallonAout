@@ -9,7 +9,7 @@ import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
 
 public class Planning {
-	private int id = 0;
+	private int id = 0; //same as parent Booking
 	private LocalDate beginDate;
 	private LocalDate endDate;
 	private List<Show> showList;

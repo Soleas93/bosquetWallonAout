@@ -15,6 +15,9 @@ public class Category {
 	private int availableTickets = 0;
 	private int maximumTickets = 0; //Total available tickets depending of Configuration of the room (owner) and type of the seats
 	
+	//db only
+	private int parentId = 0;
+	
 	
 	//Depuis db
 	public Category(int id, Type type, double price, int availableTickets, int maximumTickets) {
@@ -42,6 +45,14 @@ public class Category {
 	public void setId(int id) {
 		if(this.id == 0 && id > 0)
 			this.id = id;
+	}
+	
+	public int getParentId() {
+		return parentId;
+	}
+	
+	public void setParentId(int configurationId) {
+		this.parentId = configurationId;
 	}
 	
 	public int getAvailableTickets() {

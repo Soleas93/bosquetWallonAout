@@ -6,6 +6,9 @@ public class Ticket {
 	private Representation representation;
 	private Category.Type type;
 	
+	//db only
+	private int parentId = 0;
+	
 	public Ticket(int id, Representation representation, Category.Type type, double price) {
 		setId(id);
 		setRepresentation(representation);
@@ -29,6 +32,14 @@ public class Ticket {
 	public void setId(int id) {
 		if(this.id == 0 && id > 0)
 			this.id = id;
+	}
+	
+	public int getParentId() {
+		return parentId;
+	}
+	
+	public void setParentId(int orderId) {
+		this.parentId = orderId;
 	}
 
 

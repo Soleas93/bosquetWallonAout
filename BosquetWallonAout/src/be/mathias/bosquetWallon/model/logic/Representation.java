@@ -70,8 +70,9 @@ public class Representation {
 	}
 
 
-	private void setShow(Show show) {
-		this.show = show;
+	public void setShow(Show show) {
+		if(this.show == null)
+			this.show = show;
 	}
 
 

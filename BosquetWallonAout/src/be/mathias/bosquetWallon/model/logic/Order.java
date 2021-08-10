@@ -26,6 +26,9 @@ public class Order {
 	private double total = 0;
 	private List<Ticket> ticketList;
 	
+	//db only
+	private int parentId = 0;
+	
 	
 	public Order(int id, PaymentMethod paymentMethod, DeliveryMethod deliveryMethod, double total, @Nullable List<Ticket> ticketList) {
 		setId(id);
@@ -48,6 +51,14 @@ public class Order {
 	public void setId(int id) {
 		if(this.id == 0 && id > 0)
 			this.id = id;
+	}
+	
+	public int getParentId() {
+		return parentId;
+	}
+	
+	public void setParentId(int spectatorId) {
+		this.parentId = spectatorId;
 	}
 
 

@@ -3,6 +3,8 @@ package be.mathias.bosquetWallon.model.data;
 import java.sql.Connection;
 
 import be.mathias.bosquetWallon.model.logic.Booking;
+import be.mathias.bosquetWallon.model.logic.Category;
+import be.mathias.bosquetWallon.model.logic.Configuration;
 import be.mathias.bosquetWallon.model.logic.Order;
 import be.mathias.bosquetWallon.model.logic.Person;
 import be.mathias.bosquetWallon.model.logic.Planning;
@@ -38,6 +40,11 @@ private static final Connection connection = DriverOracle.getInstance();
 	public Dao<Show> GetShowDao() {
 		return new ShowDao(connection);
 	}
+	
+	@Override
+	public Dao<Category> GetCategoryDao() {
+		return new CategoryDao(connection);
+	}
 
 	@Override
 	public Dao<Representation> GetRepresentationDao() {
@@ -52,5 +59,10 @@ private static final Connection connection = DriverOracle.getInstance();
 	@Override
 	public Dao<Planning> GetPlanningDao() {
 		return new PlanningDao(connection);
+	}
+
+	@Override
+	public Dao<Configuration> GetConfigurationDao() {
+		return new ConfigurationDao(connection);
 	}
 }

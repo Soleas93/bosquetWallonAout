@@ -114,7 +114,7 @@ public abstract class Person {
 		this.emailAddress = emailAddress;
 	}
 
-	public void setRole(PersonRole role) {
+	private void setRole(PersonRole role) {
 		this.role = role;
 	}
 

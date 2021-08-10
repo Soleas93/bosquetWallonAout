@@ -27,7 +27,7 @@ public class Configuration {
 		put(Type.Circus, CIRCUS);
 	}};
 	
-	private int id = 0;
+	private int id = 0; //same id as parent Show
 	private Type type = null;
 	private String description;
 	private List<Category> categoryList;
@@ -42,7 +42,7 @@ public class Configuration {
 	}
 	
 	//depuis Show : categoryList est construit ! //Soit MAJ dynamique de la vue, soit prix et available tickets à 0 par défaut
-	public Configuration(Type type, String description) {
+	public Configuration( Type type, String description) {
 		this(0, type, description, null);
 	}
 	

@@ -3,36 +3,35 @@ package be.mathias.bosquetWallon.model.data;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.util.List;
 
-import be.mathias.bosquetWallon.model.logic.Planning;
-import be.mathias.bosquetWallon.model.logic.Show;
+import be.mathias.bosquetWallon.model.logic.Category;
+import be.mathias.bosquetWallon.model.logic.Configuration;
 import oracle.jdbc.OraclePreparedStatement;
 
-public class PlanningDao extends Dao<Planning> {
+public class ConfigurationDao extends Dao<Configuration> {
 	
-	ShowDao showDao = (ShowDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetShowDao();
+	CategoryDao categoryDao = (CategoryDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetCategoryDao();
 
-	public PlanningDao(Connection conn) {
+	public ConfigurationDao(Connection conn) {
 		super(conn);
 	}
 
 	@Override
-	public boolean create(Planning obj) {
-		//l'id ne peut pas être à 0, il doit correspondre à l'id du Booking parent
+	public boolean create(Configuration obj) {
+		//l'id ne peut être à 0, il doit correspondre à l'id du Show parent
 		if(obj.getId() == 0)
 			return false;
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "INSERT INTO BWA_Planning(id, begindate, enddate) VALUES (?,?,?) ";
+		String sql = "INSERT INTO BWA_Configuration(id, type, description) VALUES (?,?,?) ";
 		
 		try {
             prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
             prepare.setInt(1, obj.getId());
-            prepare.setObject(2, obj.getBeginDate());
-            prepare.setObject(3, obj.getEndDate());
+            prepare.setString(2, obj.getType().toString());
+            prepare.setString(3, obj.getDescription());
             
             int created = prepare.executeUpdate();
             
@@ -48,13 +47,13 @@ public class PlanningDao extends Dao<Planning> {
 	}
 
 	@Override
-	public boolean delete(Planning obj) {
+	public boolean delete(Configuration obj) {
 		if(obj.getId() == 0)
 			return false;
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "DELETE FROM BWA_PLANNING WHERE id = ? ";
+		String sql = "DELETE FROM BWA_Configuration WHERE id = ? ";
 		
 		try {
 			prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
@@ -73,21 +72,21 @@ public class PlanningDao extends Dao<Planning> {
 	}
 
 	@Override
-	public boolean update(Planning obj) {
+	public boolean update(Configuration obj) {
 		if(obj.getId() == 0)
 			return false;
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "update BWA_PLANNING set"
-				+ "BEGINDATE = ?,ENDDATE = ?"
+		String sql = "update BWA_CONFIGURATION set"
+				+ "DESCRIPTION = ?,TYPE = ?"
 				+ "where ID = ?";
 		
 		try {
 			prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
-            prepare.setObject(1, obj.getBeginDate());
-            prepare.setObject(2, obj.getEndDate());
-            prepare.setInt(3, obj.getId());
+            prepare.setString(1, obj.getDescription());
+            prepare.setString(2, obj.getType().toString());
+			prepare.setInt(3, obj.getId());
             int updated = prepare.executeUpdate();
             
             if(updated >= 1) {            	
@@ -102,14 +101,15 @@ public class PlanningDao extends Dao<Planning> {
 	}
 
 	@Override
-	public Planning find(int id) {
+	public Configuration find(int id) {
 		if(id <= 0)
 			return null;
 		
-		String sql = "SELECT * FROM BWA_Planning WHERE id = ?";
+		String sql = "SELECT * FROM BWA_Configuration WHERE id = ?";
 		
 		OraclePreparedStatement prepare = null;
         ResultSet result = null;
+		
 		
 		try {
             prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
@@ -118,16 +118,15 @@ public class PlanningDao extends Dao<Planning> {
             result = prepare.executeQuery();
 
             if(result.next()) {
-            	LocalDate beginDate = (LocalDate) result.getObject(2);
-            	LocalDate endDate = (LocalDate) result.getObject(3);
+            	Configuration.Type type = Configuration.Type.valueOf(result.getString(2));
+            	String description = result.getString(3);
+            	List<Category> categories = categoryDao.findByConfigurationId(id);
             	
-            	List<Show> showList = showDao.findByPlanningId(id);
-            	
-                Planning planning = new Planning(id, beginDate, endDate, showList);
+            	Configuration configuration = new Configuration(id, type , description, categories);
                 
                 result.close();
                 prepare.close();
-                return planning;
+                return configuration;
             }else
                 return null;
 		}catch (SQLException e) {
