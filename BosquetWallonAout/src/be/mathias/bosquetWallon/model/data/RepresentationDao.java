@@ -1,10 +1,13 @@
 package be.mathias.bosquetWallon.model.data;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.sql.Types;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +18,7 @@ import oracle.jdbc.OraclePreparedStatement;
 
 public class RepresentationDao extends Dao<Representation> {
 	
-	ShowDao showDao = (ShowDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetShowDao();
+	private static ShowDao showDao = (ShowDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetShowDao();
 
 	public RepresentationDao(Connection conn) {
 		super(conn);
@@ -36,9 +39,13 @@ public class RepresentationDao extends Dao<Representation> {
 		
 		try {
             prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
-            prepare.setObject(1, obj.getDate());
-            prepare.setObject(2, obj.getBeginHour());
-            prepare.setObject(3, obj.getEndHour());
+            
+            Date sqlDate = Date.valueOf(obj.getDate());
+			Time sqlBeginHour = Time.valueOf(obj.getBeginHour());
+            Time sqlEndHour = Time.valueOf(obj.getEndHour());
+            prepare.setDate(1, sqlDate);
+            prepare.setTime(2, sqlBeginHour);
+            prepare.setTime(3, sqlEndHour);
             prepare.setInt(4, obj.getShow().getId());
             prepare.registerReturnParameter(5, Types.INTEGER);
             prepare.execute();
@@ -90,16 +97,19 @@ public class RepresentationDao extends Dao<Representation> {
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "update BWA_REPRESENTATION set"
-				+ "DAYDATE = ?,BEGINHOUR = ?,ID_BWA_SHOW = ?,ENDHOUR = ?"
+		String sql = "update BWA_REPRESENTATION set "
+				+ "DAYDATE = ?,BEGINHOUR = ?,ID_BWA_SHOW = ?,ENDHOUR = ? "
 				+ "where ID = ?";
 		
 		try {
 			prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
-			prepare.setObject(1, obj.getDate());
-            prepare.setObject(2, obj.getBeginHour());
+			Date sqlDate = Date.valueOf(obj.getDate());
+			Time sqlBeginHour = Time.valueOf(obj.getBeginHour());
+            Time sqlEndHour = Time.valueOf(obj.getEndHour());
+            prepare.setDate(1, sqlDate);
+            prepare.setTime(2, sqlBeginHour);
             prepare.setInt(3, obj.getShow().getId());
-            prepare.setObject(4, obj.getEndHour());
+            prepare.setTime(4, sqlEndHour);
             prepare.setInt(5, obj.getId());
             int updated = prepare.executeUpdate();
             
@@ -132,14 +142,9 @@ public class RepresentationDao extends Dao<Representation> {
             result = prepare.executeQuery();
 
             if(result.next()) {
-            	//LocalDate date = result.getDate(2).toLocalDate();
-            	//LocalTime beginHour = result.getTime(3).toLocalTime();
-            	//LocalTime endHour = result.getTime(4).toLocalTime();
             	int showId = result.getInt(5);
             	
             	Show show = showDao.find(showId);
-            	
-                // Representation representation = new Representation(id, date, beginHour, endHour, show);
                 
             	Representation representation = show.getRepresentationList().stream()
             			.filter(r -> ((Integer)r.getId()).equals((Integer)id))

@@ -2,6 +2,7 @@ package be.mathias.bosquetWallon.model.data;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -18,8 +19,8 @@ import oracle.jdbc.OraclePreparedStatement;
 
 public class PersonDao extends Dao<Person> {
 	
-	OrderDao orderDao = (OrderDao)OracleDaoFactory.GetFactory(DaoFactory.Type.Oracle).GetOrderDao();
-	BookingDao bookingDao = (BookingDao)OracleDaoFactory.GetFactory(DaoFactory.Type.Oracle).GetBookingDao();
+	private static OrderDao orderDao = (OrderDao)OracleDaoFactory.GetFactory(DaoFactory.Type.Oracle).GetOrderDao();
+	private static BookingDao bookingDao = (BookingDao)OracleDaoFactory.GetFactory(DaoFactory.Type.Oracle).GetBookingDao();
 
 	public PersonDao(Connection conn) {
 		super(conn);
@@ -40,7 +41,7 @@ public class PersonDao extends Dao<Person> {
             prepare.setString(1, obj.getFirstName());
             prepare.setString(2, obj.getLastName());
             prepare.setString(3, obj.getAddress());
-            prepare.setBytes(4, obj.getPasswordHash().getBytes(StandardCharsets.UTF_8));
+            prepare.setString(4, obj.getPasswordHash());
             prepare.setString(5, obj.getEmailAddress());
             prepare.setString(6, obj.getRole().toString());
             prepare.registerReturnParameter(7, Types.INTEGER);
@@ -94,7 +95,8 @@ public class PersonDao extends Dao<Person> {
             prepare.setInt(1, obj.getId());
             prepare.setString(2, ((Spectator)obj).getPhoneNumber());
             prepare.setString(3, ((Spectator)obj).getGender().toString());
-            prepare.setObject(4, ((Spectator)obj).getBirthDate());
+            Date sqlDate = Date.valueOf(((Spectator)obj).getBirthDate());
+            prepare.setDate(4, sqlDate);
             
             int created = prepare.executeUpdate();
             
@@ -220,8 +222,8 @@ public class PersonDao extends Dao<Person> {
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "update BWA_PERSON set"
-				+ "FIRSTNAME = ?,LASTNAME = ?, ADDRESS = ?,PASSWORDHASH = ?,EMAILADDRESS = ?,ROLE = ?"
+		String sql = "update BWA_PERSON set "
+				+ "FIRSTNAME = ?,LASTNAME = ?, ADDRESS = ?,PASSWORDHASH = ?,EMAILADDRESS = ?,ROLE = ? "
 				+ "where ID = ?";
 		
 		try {
@@ -229,7 +231,7 @@ public class PersonDao extends Dao<Person> {
 			prepare.setString(1, obj.getFirstName());
             prepare.setString(2, obj.getLastName());
             prepare.setString(3, obj.getAddress());
-            prepare.setBytes(4, obj.getPasswordHash().getBytes(StandardCharsets.UTF_8));
+            prepare.setString(4, obj.getPasswordHash());
             prepare.setString(5, obj.getEmailAddress());
             prepare.setString(6, obj.getRole().toString());
             prepare.setInt(7, obj.getId());
@@ -268,15 +270,16 @@ public class PersonDao extends Dao<Person> {
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "update BWA_SPECTATOR set"
-				+ "PHONENUMBER = ?,GENDER = ?,BIRTHDATE = ?"
+		String sql = "update BWA_SPECTATOR set "
+				+ "PHONENUMBER = ?,GENDER = ?,BIRTHDATE = ? "
 				+ "where ID = ?";
 		
 		try {
 			prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
             prepare.setString(1, (obj).getPhoneNumber());
             prepare.setString(2, (obj).getGender().toString());
-            prepare.setObject(3, (obj).getBirthDate());
+            Date sqlDate = Date.valueOf(obj.getBirthDate());
+            prepare.setDate(3, sqlDate);
             prepare.setInt(4, obj.getId());
             int updated = prepare.executeUpdate();
             
@@ -297,8 +300,8 @@ public class PersonDao extends Dao<Person> {
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "update BWA_ARTIST set"
-				+ "SHOWNAME = ?"
+		String sql = "update BWA_ARTIST set "
+				+ "SHOWNAME = ? "
 				+ "where ID = ?";
 		
 		try {
@@ -324,8 +327,8 @@ public class PersonDao extends Dao<Person> {
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "update BWA_MANAGER set"
-				+ "PHONENUMBER = ?"
+		String sql = "update BWA_MANAGER set "
+				+ "PHONENUMBER = ? "
 				+ "where ID = ?";
 		
 		try {
@@ -351,8 +354,8 @@ public class PersonDao extends Dao<Person> {
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "update BWA_ORGANIZER set"
-				+ "PHONENUMBER = ?"
+		String sql = "update BWA_ORGANIZER set "
+				+ "PHONENUMBER = ? "
 				+ "where ID = ?";
 		
 		try {
@@ -392,7 +395,7 @@ public class PersonDao extends Dao<Person> {
             	String firstName = result.getString(2);
             	String lastName = result.getString(3);
             	String address = result.getString(4);
-            	String password = new String(result.getBytes(5), StandardCharsets.UTF_8);
+            	String password = result.getString(5);
             	String email = result.getString(6);
             	PersonRole role = PersonRole.valueOf(result.getString(7));
             	
@@ -443,7 +446,7 @@ public class PersonDao extends Dao<Person> {
             if(result.next()) {
             	String phoneNumber = result.getString(2);
             	Gender gender = Gender.valueOf(result.getString(3));
-            	LocalDate birthDate = (LocalDate) result.getObject(4);
+            	LocalDate birthDate = (result.getDate(4)).toLocalDate();
             	List<Order> orderList = orderDao.findBySpectatorId(id);
             	
             	Spectator spectator= new Spectator(id, firstName, lastName, address, password, email, phoneNumber, gender, birthDate, orderList);
@@ -494,7 +497,7 @@ public class PersonDao extends Dao<Person> {
 		if(id <= 0)
 			return null;
 		
-		String sql = "SELECT * FROM BWA_Spectator WHERE id = ?";
+		String sql = "SELECT * FROM BWA_Manager WHERE id = ?";
 		
 		OraclePreparedStatement prepare = null;
         ResultSet result = null;
@@ -525,7 +528,7 @@ public class PersonDao extends Dao<Person> {
 		if(id <= 0)
 			return null;
 		
-		String sql = "SELECT * FROM BWA_Spectator WHERE id = ?";
+		String sql = "SELECT * FROM BWA_Organizer WHERE id = ?";
 		
 		OraclePreparedStatement prepare = null;
         ResultSet result = null;
@@ -568,10 +571,10 @@ public class PersonDao extends Dao<Person> {
 		
 		List<Artist> artists = new ArrayList<Artist>();
 		
-		String sql = "SELECT SA.id_BWA_Show AS id_show, P.id AS id_person, P.firstname, P.lastname, P.address, P.passwordhash, p.emailaddress, a.showname FROM BWA_SHOW_PLAYEDBY_ARTISTS SA"
-				+ "INNER JOIN BWA_ARTIST A ON SA.id_BWA_Artist = A.id"
-				+ "INNER JOIN BWA_PERSON P ON A.id = P.id"
-				+ "WHERE SA.id_BWA_Show = ?";
+		String sql = "SELECT SA.id_BWA_Show AS id_show, P.id AS id_person, P.firstname, P.lastname, P.address, P.passwordhash, p.emailaddress, a.showname FROM BWA_SHOW_PLAYEDBY_ARTISTS SA "
+				+ "INNER JOIN BWA_ARTIST A ON SA.id_BWA_Artist = A.id "
+				+ "INNER JOIN BWA_PERSON P ON A.id = P.id "
+				+ "WHERE SA.id_BWA_Show = ? ";
 
 		OraclePreparedStatement prepare = null;
         ResultSet result = null;
@@ -606,4 +609,34 @@ public class PersonDao extends Dao<Person> {
         }
 	}
 	
+	public Person findOnConnection(String emailAddress, String passwordHash) {
+		if(emailAddress.isBlank() || passwordHash.isBlank())
+			return null;
+		
+		String sql = "SELECT id FROM BWA_Person WHERE ( emailAddress = ? AND passwordHash = ?)";
+		
+		OraclePreparedStatement prepare = null;
+        ResultSet result = null;
+		
+		try {
+            prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
+            prepare.setString(1, emailAddress);
+            prepare.setString(2, passwordHash);
+            result = prepare.executeQuery();
+
+            if(result.next()) {
+            	int id = result.getInt(1);
+            	
+            	Person person = find(id);
+                
+                result.close();
+                prepare.close();
+                return person;
+            }else
+                return null;
+		}catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+	}
 }

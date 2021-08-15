@@ -37,7 +37,6 @@ public class Show {
 			setConfiguration(configuration);
 	}
 	
-	//From planning
 	public Show(String title, String description, BufferedImage image, int ticketPerPerson,
 			List<Artist> artistList, List<Representation> representationList, Configuration.Type confType) {
 		this(0, title, description, image, ticketPerPerson, artistList, representationList, null);

@@ -1,9 +1,11 @@
 package be.mathias.bosquetWallon.model.data;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +14,7 @@ import be.mathias.bosquetWallon.model.logic.Planning;
 import oracle.jdbc.OraclePreparedStatement;
 
 public class BookingDao extends Dao<Booking> {
-	PlanningDao planningDao = (PlanningDao) OracleDaoFactory.GetFactory(DaoFactory.Type.Oracle).GetPlanningDao();
+	private static PlanningDao planningDao = (PlanningDao) OracleDaoFactory.GetFactory(DaoFactory.Type.Oracle).GetPlanningDao();
 
 	public BookingDao(Connection conn) {
 		super(conn);
@@ -89,8 +91,8 @@ public class BookingDao extends Dao<Booking> {
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "update BWA_BOOKING set"
-				+ "ID_BWA_ORGANIZER = ?,STATUS = ?,PRICE = ?,DEPOSIT = ?,BALANCE = ?"
+		String sql = "update BWA_BOOKING set "
+				+ "ID_BWA_ORGANIZER = ?,STATUS = ?,PRICE = ?,DEPOSIT = ?,BALANCE = ? "
 				+ "where ID = ?";
 		
 		try {
@@ -184,6 +186,54 @@ public class BookingDao extends Dao<Booking> {
             	double balance = (double) result.getFloat(3);
             	Booking.State status = Booking.State.valueOf(result.getString(4));
             	double price = (double) result.getInt(5);
+            	
+            	Planning planning = planningDao.find(id);
+            	
+            	Booking booking = new Booking(id, deposit, balance, status, price, planning);
+            	booking.setParentId(organizerId);
+            	
+            	bookings.add(booking);
+            }
+            
+            if(bookings.isEmpty())
+                return null;
+                
+            result.close();
+            prepare.close();
+            return bookings;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+	}
+	
+
+	public List<Booking> findByMonth(LocalDate date) {
+		if(date == null)
+			return null;
+		
+		List<Booking> bookings  = new ArrayList<Booking>();
+		
+		String sql = "SELECT b.id, b.deposit, b.balance, b.status, b.price, b.id_bwa_organizer FROM BWA_Booking B "
+				+ "INNER JOIN BWA_Planning P ON B.id = P.id"
+				+ "WHERE P.beginDate >= TRUNC(?, 'MM') AND P.endDate <= LAST_DAY(?) ";
+
+		OraclePreparedStatement prepare = null;
+        ResultSet result = null;
+		
+		try {
+            prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
+            prepare.setDate(1, Date.valueOf(date));
+            prepare.setDate(2, Date.valueOf(date));
+            result = prepare.executeQuery();
+
+            while(result.next()) {
+            	int id = result.getInt(1);
+            	double deposit = (double) result.getFloat(2);
+            	double balance = (double) result.getFloat(3);
+            	Booking.State status = Booking.State.valueOf(result.getString(4));
+            	double price = (double) result.getInt(5);
+            	int organizerId = result.getInt(6);
             	
             	Planning planning = planningDao.find(id);
             	

@@ -9,7 +9,7 @@ import org.eclipse.jdt.annotation.Nullable;
 
 public class Organizer extends Person {
 	private String phoneNumber;
-	private List<Booking> bookingList;
+	private List<Booking> bookingList = new ArrayList<Booking>();
 	
 	public Organizer(int id, String firstName, String lastName, String address, String password, String email, String phoneNumber, @Nullable List<Booking> bookingList) {
 		super(id, firstName, lastName, address, password, email, PersonRole.Organizer);

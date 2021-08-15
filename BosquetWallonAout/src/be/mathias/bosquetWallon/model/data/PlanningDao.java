@@ -1,9 +1,11 @@
 package be.mathias.bosquetWallon.model.data;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import be.mathias.bosquetWallon.model.logic.Planning;
@@ -12,7 +14,7 @@ import oracle.jdbc.OraclePreparedStatement;
 
 public class PlanningDao extends Dao<Planning> {
 	
-	ShowDao showDao = (ShowDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetShowDao();
+	private static ShowDao showDao = (ShowDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetShowDao();
 
 	public PlanningDao(Connection conn) {
 		super(conn);
@@ -31,8 +33,11 @@ public class PlanningDao extends Dao<Planning> {
 		try {
             prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
             prepare.setInt(1, obj.getId());
-            prepare.setObject(2, obj.getBeginDate());
-            prepare.setObject(3, obj.getEndDate());
+            
+            Date sqlBeginDate = Date.valueOf(obj.getBeginDate());
+            Date sqlEndDate = Date.valueOf(obj.getEndDate());
+            prepare.setDate(2, sqlBeginDate);
+            prepare.setDate(3, sqlEndDate);
             
             int created = prepare.executeUpdate();
             
@@ -79,14 +84,16 @@ public class PlanningDao extends Dao<Planning> {
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "update BWA_PLANNING set"
-				+ "BEGINDATE = ?,ENDDATE = ?"
+		String sql = "update BWA_PLANNING set "
+				+ "BEGINDATE = ?,ENDDATE = ? "
 				+ "where ID = ?";
 		
 		try {
 			prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
-            prepare.setObject(1, obj.getBeginDate());
-            prepare.setObject(2, obj.getEndDate());
+			Date sqlBeginDate = Date.valueOf(obj.getBeginDate());
+            Date sqlEndDate = Date.valueOf(obj.getEndDate());
+            prepare.setDate(1, sqlBeginDate);
+            prepare.setDate(2, sqlEndDate);
             prepare.setInt(3, obj.getId());
             int updated = prepare.executeUpdate();
             
@@ -118,8 +125,8 @@ public class PlanningDao extends Dao<Planning> {
             result = prepare.executeQuery();
 
             if(result.next()) {
-            	LocalDate beginDate = (LocalDate) result.getObject(2);
-            	LocalDate endDate = (LocalDate) result.getObject(3);
+            	LocalDate beginDate = result.getDate(2).toLocalDate();
+            	LocalDate endDate = result.getDate(3).toLocalDate();
             	
             	List<Show> showList = showDao.findByPlanningId(id);
             	
@@ -130,6 +137,91 @@ public class PlanningDao extends Dao<Planning> {
                 return planning;
             }else
                 return null;
+		}catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+	}
+	
+	
+	public boolean isCompetitor(LocalDate begin, LocalDate end) {
+		if(begin == null || end == null)
+			return true;
+		
+		String sql = "SELECT COUNT(DISTINCT id) FROM BWA_Planning "
+				+ "WHERE (beginDate BETWEEN ? AND ?) OR (endDate BETWEEN ? AND ?) ";
+		
+		OraclePreparedStatement prepare = null;
+        ResultSet result = null;
+		
+		try {
+            prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
+            prepare.setDate(1,  Date.valueOf(begin));
+            prepare.setDate(2,  Date.valueOf(end.minusDays(1)));
+            prepare.setDate(3,  Date.valueOf(begin.plusDays(1)));
+            prepare.setDate(4,  Date.valueOf(end));
+            
+            result = prepare.executeQuery();
+
+            if(result.next()) {
+            	int count = result.getInt(1);
+            	
+            	boolean competitor = count > 0;
+                
+                result.close();
+                prepare.close();
+                return competitor;
+            }else
+                return false;
+		}catch (SQLException e) {
+            e.printStackTrace();
+            return true;
+        }
+	}
+	
+	public List<Integer> bookedDate(LocalDate month){
+		if(month == null)
+			return null;
+		
+		String sql = "SELECT beginDate, endDate FROM BWA_Planning "
+				+ "WHERE (beginDate BETWEEN ? AND ?) OR (endDate BETWEEN ? AND ?) ";
+		
+		OraclePreparedStatement prepare = null;
+        ResultSet result = null;
+        
+        LocalDate firstday = month.withDayOfMonth(1);
+        LocalDate lastday = month.withDayOfMonth(month.lengthOfMonth());
+		
+		try {
+            prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
+            prepare.setDate(1,  Date.valueOf(firstday));
+            prepare.setDate(2,  Date.valueOf(lastday));
+            prepare.setDate(3,  Date.valueOf(firstday));
+            prepare.setDate(4,  Date.valueOf(lastday));
+            
+            result = prepare.executeQuery();
+
+            List<Integer> daysBooked = new ArrayList<Integer>();
+            while(result.next()) {
+            	LocalDate beginDate = result.getDate(1).toLocalDate();
+            	LocalDate endDate = result.getDate(2).toLocalDate();
+            	
+            	if(beginDate.isBefore(firstday))
+            		beginDate = firstday;
+            	if(endDate.isAfter(lastday))
+            		endDate = lastday;
+            	
+            	while(beginDate.isBefore(endDate)) {
+            		daysBooked.add(beginDate.getDayOfMonth());
+            		beginDate = beginDate.plusDays(1);
+            	}                
+            }
+            if(daysBooked == null || daysBooked.isEmpty())
+            	return null;
+            
+            result.close();
+            prepare.close();
+            return daysBooked;
 		}catch (SQLException e) {
             e.printStackTrace();
             return null;

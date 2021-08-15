@@ -11,7 +11,7 @@ import oracle.jdbc.OraclePreparedStatement;
 
 public class ConfigurationDao extends Dao<Configuration> {
 	
-	CategoryDao categoryDao = (CategoryDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetCategoryDao();
+	private static CategoryDao categoryDao = (CategoryDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetCategoryDao();
 
 	public ConfigurationDao(Connection conn) {
 		super(conn);
@@ -78,8 +78,8 @@ public class ConfigurationDao extends Dao<Configuration> {
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "update BWA_CONFIGURATION set"
-				+ "DESCRIPTION = ?,TYPE = ?"
+		String sql = "update BWA_CONFIGURATION set "
+				+ "DESCRIPTION = ?,TYPE = ? "
 				+ "where ID = ?";
 		
 		try {

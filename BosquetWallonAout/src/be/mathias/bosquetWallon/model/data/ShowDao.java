@@ -6,11 +6,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
@@ -22,9 +26,9 @@ import oracle.jdbc.OraclePreparedStatement;
 
 public class ShowDao extends Dao<Show> {
 	
-	RepresentationDao representationDao = (RepresentationDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetRepresentationDao();
-	PersonDao artistDao = (PersonDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetPersonDao();
-	ConfigurationDao configurationDaoDao = (ConfigurationDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetConfigurationDao();
+	private static RepresentationDao representationDao = (RepresentationDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetRepresentationDao();
+	private static PersonDao artistDao = (PersonDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetPersonDao();
+	private static ConfigurationDao configurationDao = (ConfigurationDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetConfigurationDao();
 
 	public ShowDao(Connection conn) {
 		super(conn);
@@ -108,9 +112,9 @@ public class ShowDao extends Dao<Show> {
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "update BWA_SHOW set"
-				+ "IMAGE = ?,DESCRIPTION = ?,ID_BWA_PLANNING = ?,TITLE = ?,TICKETPERPERSON = ?"
-				+ "where ID = ?;";
+		String sql = "update BWA_SHOW set "
+				+ "IMAGE = ?,DESCRIPTION = ?,ID_BWA_PLANNING = ?,TITLE = ?,TICKETPERPERSON = ? "
+				+ "where ID = ?";
 		
 		try {
 			prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
@@ -171,7 +175,7 @@ public class ShowDao extends Dao<Show> {
 
             	List<Representation> representationList = representationDao.findByShow(id);
             	List<Artist> artistList = artistDao.findArtistsByShowId(id);
-            	Configuration configuration = configurationDaoDao.find(id);
+            	Configuration configuration = configurationDao.find(id);
             	
             	Show show = new Show(id, title, description, image, ticketPerPerson, artistList, representationList, configuration);
             	for(Representation representation : representationList)
@@ -227,7 +231,7 @@ public class ShowDao extends Dao<Show> {
 
             	List<Representation> representationList = representationDao.findByShow(id);
             	List<Artist> artistList = artistDao.findArtistsByShowId(id);
-            	Configuration configuration = configurationDaoDao.find(id);
+            	Configuration configuration = configurationDao.find(id);
             	
             	Show show = new Show(id, title, description, image, ticketPerPerson, artistList, representationList, configuration);
             	for(Representation representation : representationList)
@@ -249,4 +253,63 @@ public class ShowDao extends Dao<Show> {
         }
 	}
 
+	public List<Show> findFromNow(){
+List<Show> shows = new ArrayList<Show>();
+		
+		String sql = "SELECT S.id, S.title, S.image, s.ticketperperson, s.id_bwa_planning, s.description FROM BWA_SHOW S "
+				+ "INNER JOIN BWA_PLANNING ON S.id_bwa_planning = BWA_PLANNING.id "
+				+ "WHERE BWA_PLANNING.endDate >= ?";
+
+		OraclePreparedStatement prepare = null;
+        ResultSet result = null;
+		
+		try {
+            prepare = (OraclePreparedStatement) connect.prepareStatement(sql);
+            LocalDate nowDate = LocalDate.now();
+            prepare.setDate(1, Date.valueOf(nowDate));
+            result = prepare.executeQuery();
+
+            while(result.next()) {
+            	int id = result.getInt(1);
+            	String title = result.getString(2);
+            	BufferedImage image = null;
+				try {
+					image = ImageIO.read(result.getBlob(3).getBinaryStream());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+            	int ticketPerPerson = result.getInt(4);
+            	int planningId = result.getInt(5);
+            	String description = result.getString(6);
+
+            	List<Representation> representationList = representationDao.findByShow(id);
+            	List<Artist> artistList = artistDao.findArtistsByShowId(id);
+            	Configuration configuration = configurationDao.find(id);
+            	
+            	Show show = new Show(id, title, description, image, ticketPerPerson, artistList, representationList, configuration);
+            	
+            	//filter only available representations from now
+            	representationList = representationList.stream()
+            			.filter(r -> r.getBeginHour().isAfter(LocalTime.now()))
+            			.collect(Collectors.toList());
+            	
+            	for(Representation representation : representationList)
+                    		representation.setShow(show);
+            	show.setParentId(planningId);
+            	
+            	shows.add(show);
+            }
+            
+            if(shows.isEmpty())
+                return null;
+                
+            result.close();
+            prepare.close();
+            return shows;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+		
+	}
 }

@@ -15,7 +15,7 @@ import oracle.jdbc.OraclePreparedStatement;
 
 public class TicketDao extends Dao<Ticket> {
 	
-	Dao<Representation> representationDao = DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetRepresentationDao();
+	private static Dao<Representation> representationDao = DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetRepresentationDao();
 
 	public TicketDao(Connection conn) {
 		super(conn);
@@ -91,8 +91,8 @@ public class TicketDao extends Dao<Ticket> {
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "update BWA_TICKET set"
-				+ "ID_BWA_REPRESENTATION = ?,ID_BWA_ORDER = ?,PRICE = ?,TYPE = ?"
+		String sql = "update BWA_TICKET set "
+				+ "ID_BWA_REPRESENTATION = ?,ID_BWA_ORDER = ?,PRICE = ?,TYPE = ? "
 				+ "where ID = ?";
 		
 		try {

@@ -125,7 +125,7 @@ public abstract class Person {
 	public static String HashPassword(String password) {
 		try{
 			MessageDigest digest = MessageDigest.getInstance("SHA-256");
-			return digest.digest(password.getBytes(StandardCharsets.UTF_8)).toString();
+			return new String(digest.digest(password.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
 		}
 		catch(NoSuchAlgorithmException e){
 			System.out.print("Error with HashPassword from Person class : " + e);

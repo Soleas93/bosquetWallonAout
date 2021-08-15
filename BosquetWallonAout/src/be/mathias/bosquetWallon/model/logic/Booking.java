@@ -1,6 +1,7 @@
 package be.mathias.bosquetWallon.model.logic;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 public class Booking {
@@ -94,24 +95,33 @@ public class Booking {
 	}
 
 	private void setPrice() {
+		this.price = Booking.getPrice(planning.getBeginDate(), planning.getEndDate());
+	}
+	
+	public static double getPrice(LocalDate begin, LocalDate end) {
 		double total = 0;
+		double totalWithDiscount = 0;
 		
-		int numOfDays = (int) planning.getBeginDate().until(planning.getEndDate(), ChronoUnit.DAYS );
-		DayOfWeek baseDay = planning.getBeginDate().getDayOfWeek();
+		
+		int numOfDays = (int) begin.until(end, ChronoUnit.DAYS );
+		DayOfWeek baseDay = begin.getDayOfWeek();
 		
 		for(int i = 0; i < numOfDays; i++) {
 			DayOfWeek day = baseDay.plus(i);
 			switch(day) {
 				case FRIDAY, SATURDAY :
 					total += 4500;
+					break;
 				default :
 					total += 3000;
+					break;
 			}
 		}
 		// 2j = -5%, 3j = -10%, 7j = -20%, 15 = -30%
 		double discount = numOfDays >= 15 ? 0.3: numOfDays >= 7 ? 0.2 : numOfDays >= 3 ? 0.1 : numOfDays >= 2 ? 0.05 : 0;
 
-		this.price = total * (double)(1.0-discount);
+		totalWithDiscount = total * (double)(1.0-discount);
+		return totalWithDiscount;
 	}
 
 	public Planning getPlanning() {

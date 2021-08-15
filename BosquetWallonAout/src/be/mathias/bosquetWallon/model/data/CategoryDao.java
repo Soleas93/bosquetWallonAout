@@ -86,8 +86,8 @@ public class CategoryDao extends Dao<Category> {
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "update BWA_CATEGORY set"
-				+ "AVAILABLETICKETS = ?,ID_BWA_CONFIGURATION = ?,PRICE = ?,MAXIMUMTICKETS = ?,TYPE = ?"
+		String sql = "update BWA_CATEGORY set "
+				+ "AVAILABLETICKETS = ?,ID_BWA_CONFIGURATION = ?,PRICE = ?,MAXIMUMTICKETS = ?,TYPE = ? "
 				+ "where ID = ?";
 		
 		try {

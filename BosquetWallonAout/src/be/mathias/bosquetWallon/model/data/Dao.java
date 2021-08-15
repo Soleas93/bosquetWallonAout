@@ -2,6 +2,7 @@ package be.mathias.bosquetWallon.model.data;
 
 import java.sql.Connection;
 
+
 public abstract class Dao<T> {
 	protected Connection connect = null;
 	

@@ -10,7 +10,7 @@ import oracle.jdbc.OraclePreparedStatement;
 
 public class OrderDao extends Dao<Order> {
 	
-	private TicketDao ticketDao = (TicketDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetTicketDao();
+	private static TicketDao ticketDao = (TicketDao) DaoFactory.GetFactory(DaoFactory.Type.Oracle).GetTicketDao();
 	
 	public OrderDao(Connection conn) {
 		super(conn);
@@ -89,8 +89,8 @@ public class OrderDao extends Dao<Order> {
 		
 		OraclePreparedStatement prepare = null;
 		
-		String sql = "UPDATE BWA_ORDER" +
-				"SET paymentMethod = ?, deliveryMethod = ?, total = ?" +
+		String sql = "UPDATE BWA_ORDER " +
+				"SET paymentMethod = ?, deliveryMethod = ?, total = ? " +
 				"WHERE id = ? ";
 		
 		try {

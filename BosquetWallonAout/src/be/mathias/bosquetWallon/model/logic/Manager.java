@@ -9,6 +9,7 @@ public class Manager extends Person {
 	
 	public Manager(int id, String firstName, String lastName, String address, String password, String email, String phoneNumber) {
 		super(id, firstName, lastName, address, password, email, PersonRole.Manager);
+		setPhoneNumber(phoneNumber);
 	}
 
 	public Manager(String firstName, String lastName, String address, String password, String email, String phoneNumber) {
